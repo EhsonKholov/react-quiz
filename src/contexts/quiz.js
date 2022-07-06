@@ -1,23 +1,22 @@
 import { createContext, useReducer } from "react";
-import questions from "../data";
-import { shuffleAnswers } from "../helpers";
+import {normalizeQuestions, shuffleAnswers} from "../helpers";
 
 const initialState = {
   currentQuestionIndex: 0,
-  questions,
+  questions: [],
   showResults: false,
-  answers: shuffleAnswers(questions[0]),
+  answers: [],
   currentAnswer: "",
   correctAnswersCount: 0,
+  categories: [],
+  apiURL: "https://opentdb.com/api.php?",
 };
 
 const reducer = (state, action) => {
   switch (action.type) {
     case "SELECT_ANSWER": {
 
-      const correctAnswersCount =
-        action.payload ===
-        state.questions[state.currentQuestionIndex].correctAnswer ? state.correctAnswersCount + 1 : state.correctAnswersCount;
+      const correctAnswersCount = action.payload === state.questions[state.currentQuestionIndex].correctAnswer ? state.correctAnswersCount + 1 : state.correctAnswersCount;
 
       return {
         ...state,
@@ -28,8 +27,7 @@ const reducer = (state, action) => {
 
     case "NEXT_QUESTION": {
 
-      const showResults =
-        state.currentQuestionIndex === state.questions.length - 1;
+      const showResults = state.currentQuestionIndex === state.questions.length - 1;
       const currentQuestionIndex = showResults ? state.currentQuestionIndex : state.currentQuestionIndex + 1;
       const answers = showResults ? [] : shuffleAnswers(state.questions[currentQuestionIndex]);
 
@@ -44,6 +42,33 @@ const reducer = (state, action) => {
 
     case "RESTART": {
       return initialState;
+    }
+
+    case "FORM_START_PAGE_SUBMIT": {
+      const normalizedQuestions = normalizeQuestions(action.payload)
+
+      return {
+        ...initialState,
+        questions: normalizedQuestions,
+        answers: shuffleAnswers(normalizedQuestions[0])
+      };
+    }
+
+    case "LOADED_QUESTIONS": {
+      const normalizedQuestions = normalizeQuestions(action.payload)
+
+      return {
+        ...state,
+        questions: normalizedQuestions,
+        answers: shuffleAnswers(normalizedQuestions[0])
+      };
+    }
+
+    case "LOADED_CATEGORIES": {
+      return {
+        ...state,
+        categories: action.payload
+      }
     }
 
     default: {
